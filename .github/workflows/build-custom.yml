@@ -17,11 +17,16 @@ jobs:
             gcc-multilib g++-multilib gettext git libncurses-dev libssl-dev \
             python3-setuptools rsync unzip zlib1g-dev file wget curl python3
 
-      - name: Clone OpenWrt at exact commit
+      - name: Clone OpenWrt
         run: |
           git clone https://github.com/openwrt/openwrt.git
           cd openwrt
-          git checkout d1129c83f
+          # 找2024年11月15日前后的commit
+          git log --oneline --before="2024-11-16" --after="2024-11-14" | head -5
+          # 使用最接近的commit
+          COMMIT=$(git log --oneline --before="2024-11-16" --after="2024-11-14" | head -1 | awk '{print $1}')
+          echo "Using commit: $COMMIT"
+          git checkout $COMMIT
 
       - name: Add AWG feed
         run: |
@@ -47,18 +52,14 @@ jobs:
       - name: Download sources
         run: |
           cd openwrt
-          make download -j4 V=s 2>&1 | tail -20
+          make download -j4 2>&1 | tail -20
 
       - name: Build packages
         run: |
           cd openwrt
-          make package/feeds/amneziawg/kmod-amneziawg/compile -j$(nproc) V=s
-          make package/feeds/amneziawg/amneziawg-tools/compile -j$(nproc) V=s
-          make package/feeds/amneziawg/luci-proto-amneziawg/compile -j$(nproc) V=s
-
-      - name: Collect packages
-        run: |
-          find openwrt/bin -name "*.ipk" | grep -iE "amnezia|kmod-amnezia"
+          make package/feeds/amneziawg/kmod-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -50
+          make package/feeds/amneziawg/amneziawg-tools/compile -j$(nproc) V=s 2>&1 | tail -20
+          make package/feeds/amneziawg/luci-proto-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -20
 
       - name: Upload
         uses: actions/upload-artifact@v4
