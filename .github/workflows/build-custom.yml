@@ -65,22 +65,23 @@ jobs:
       - name: Build packages
         run: |
           cd openwrt
-          make package/feeds/amneziawg/kmod-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -50
+          make package/feeds/amneziawg/kmod-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -30
           make package/feeds/amneziawg/amneziawg-tools/compile -j$(nproc) V=s 2>&1 | tail -20
-          make package/feeds/amneziawg/luci-proto-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -20
+          make package/feeds/amneziawg/luci-proto-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -20 || true
 
-- name: Collect and Upload
+      - name: Collect and Upload
         run: |
           echo "=== 查找所有ipk ==="
           find /home/runner/work -name "*.ipk" 2>/dev/null | sort
-          echo "=== 查找amnezia相关 ==="
-          find /home/runner/work -name "*amnezia*" 2>/dev/null | sort
-          find /home/runner/work -name "*awg*" 2>/dev/null | sort
+          echo "=== 查找amnezia相关所有文件 ==="
+          find /home/runner/work -name "*amnezia*" -o -name "*awg*" 2>/dev/null | sort
+          echo "=== openwrt/bin 目录 ==="
+          ls -la /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/ 2>/dev/null || echo "不存在"
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: awg-packages
-          path: /home/runner/work/**/*.ipk
+          path: /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/**/*.ipk
           if-no-files-found: warn
           retention-days: 7
