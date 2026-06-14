@@ -22,8 +22,9 @@ jobs:
         run: |
           git clone https://github.com/immortalwrt/immortalwrt.git
           cd immortalwrt
-          git checkout openwrt-24.10
-          git log --oneline -3
+          git tag | grep 24.10
+          git checkout v24.10.6
+          git log --oneline -1
 
       - name: Add AWG feed
         run: |
@@ -43,18 +44,7 @@ jobs:
           CONFIG_PACKAGE_kmod-amneziawg=m
           CONFIG_PACKAGE_amneziawg-tools=m
           CONFIG_PACKAGE_luci-proto-amneziawg=m
-          CONFIG_PACKAGE_kmod-crypto-chacha20=m
-          CONFIG_PACKAGE_kmod-crypto-lib-chacha20=m
-          CONFIG_PACKAGE_kmod-crypto-lib-chacha20poly1305=m
-          CONFIG_PACKAGE_kmod-crypto-lib-curve25519=m
-          CONFIG_PACKAGE_kmod-crypto-lib-poly1305=m
-          CONFIG_PACKAGE_kmod-udptunnel4=m
-          CONFIG_PACKAGE_kmod-udptunnel6=m
           EOF
-          make defconfig
-          echo "CONFIG_CRYPTO_CHACHA20_X86_64=m" >> .config
-          echo "CONFIG_CRYPTO_POLY1305_X86_64=m" >> .config
-          echo "CONFIG_CRYPTO_CURVE25519_X86_64=m" >> .config
           make defconfig
 
       - name: Download sources
@@ -76,7 +66,6 @@ jobs:
         run: |
           cd immortalwrt
           make target/linux/compile -j$(nproc) V=s 2>&1 | tail -20
-          make package/kernel/linux/compile -j$(nproc) V=s 2>&1 | tail -20
 
       - name: Build packages
         run: |
