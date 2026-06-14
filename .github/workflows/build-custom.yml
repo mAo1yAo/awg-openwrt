@@ -71,17 +71,15 @@ jobs:
 
       - name: Collect and Upload
         run: |
-          echo "=== 查找所有ipk ==="
-          find /home/runner/work -name "*.ipk" 2>/dev/null | sort
-          echo "=== 查找amnezia相关所有文件 ==="
-          find /home/runner/work -name "*amnezia*" -o -name "*awg*" 2>/dev/null | sort
-          echo "=== openwrt/bin 目录 ==="
-          ls -la /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/ 2>/dev/null || echo "不存在"
+          echo "=== bin/packages 内容 ==="
+          find /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/packages -type f | sort
+          echo "=== bin/targets 内容 ==="
+          find /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/targets -type f | sort
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: awg-packages
-          path: /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/**/*.ipk
+          path: /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/packages/**/*amnezia*.ipk
           if-no-files-found: warn
           retention-days: 7
