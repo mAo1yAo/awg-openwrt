@@ -43,6 +43,13 @@ jobs:
           CONFIG_PACKAGE_kmod-amneziawg=m
           CONFIG_PACKAGE_amneziawg-tools=m
           CONFIG_PACKAGE_luci-proto-amneziawg=m
+          CONFIG_PACKAGE_kmod-crypto-chacha20=m
+          CONFIG_PACKAGE_kmod-crypto-lib-chacha20=m
+          CONFIG_PACKAGE_kmod-crypto-lib-chacha20poly1305=m
+          CONFIG_PACKAGE_kmod-crypto-lib-curve25519=m
+          CONFIG_PACKAGE_kmod-crypto-lib-poly1305=m
+          CONFIG_PACKAGE_kmod-udptunnel4=m
+          CONFIG_PACKAGE_kmod-udptunnel6=m
           EOF
           make defconfig
 
@@ -65,6 +72,7 @@ jobs:
         run: |
           cd immortalwrt
           make target/linux/compile -j$(nproc) V=s 2>&1 | tail -20
+          make package/kernel/linux/compile -j$(nproc) V=s 2>&1 | tail -20
 
       - name: Build packages
         run: |
