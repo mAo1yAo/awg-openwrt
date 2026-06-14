@@ -61,6 +61,11 @@ jobs:
           cd immortalwrt
           make toolchain/install -j$(nproc) V=s 2>&1 | tail -10
 
+      - name: Build kernel
+        run: |
+          cd immortalwrt
+          make target/linux/compile -j$(nproc) V=s 2>&1 | tail -20
+
       - name: Build packages
         run: |
           cd immortalwrt
