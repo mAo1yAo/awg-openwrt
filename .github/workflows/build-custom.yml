@@ -22,7 +22,6 @@ jobs:
         run: |
           git clone https://github.com/immortalwrt/immortalwrt.git
           cd immortalwrt
-          git tag | grep 24.10
           git checkout v24.10.6
           git log --oneline -1
 
@@ -65,7 +64,7 @@ jobs:
       - name: Build kernel
         run: |
           cd immortalwrt
-          make target/linux/compile -j$(nproc) V=s 2>&1 | tail -20
+          make target/linux/install -j$(nproc) V=s 2>&1 | tail -40
 
       - name: Build packages
         run: |
