@@ -43,10 +43,20 @@ jobs:
           CONFIG_PACKAGE_kmod-amneziawg=m
           CONFIG_PACKAGE_amneziawg-tools=m
           CONFIG_PACKAGE_luci-proto-amneziawg=m
+          CONFIG_PACKAGE_kmod-wireguard=m
+          CONFIG_PACKAGE_kmod-crypto-lib-chacha20poly1305=m
+          CONFIG_PACKAGE_kmod-crypto-lib-chacha20=m
+          CONFIG_PACKAGE_kmod-crypto-lib-poly1305=m
+          CONFIG_PACKAGE_kmod-crypto-lib-curve25519=m
+          CONFIG_PACKAGE_kmod-crypto-hash=m
+          CONFIG_PACKAGE_kmod-crypto-hmac=m
+          CONFIG_PACKAGE_kmod-crypto-kpp=m
+          CONFIG_PACKAGE_kmod-udptunnel4=m
+          CONFIG_PACKAGE_kmod-udptunnel6=m
           EOF
           make defconfig
-          echo "=== 确认依赖已传导到内核配置 ==="
-          grep -E "CONFIG_PACKAGE_kmod-crypto|CONFIG_PACKAGE_kmod-udptunnel" .config || true
+          echo "=== 验证关键依赖已启用 ==="
+          grep -E "CONFIG_PACKAGE_kmod-crypto-hmac|CONFIG_PACKAGE_kmod-crypto-lib-chacha20=|CONFIG_PACKAGE_kmod-amneziawg|CONFIG_PACKAGE_kmod-udptunnel4" .config
 
       - name: Download sources
         run: |
@@ -68,18 +78,24 @@ jobs:
           cd immortalwrt
           make target/compile -j$(nproc) V=s 2>&1 | tail -40
 
-      - name: Build all packages
+      - name: Build kernel module packages
         run: |
           cd immortalwrt
-          make package/compile -j$(nproc) V=s 2>&1 | tail -60 || true
+          make package/kernel/linux/compile -j$(nproc) V=s 2>&1 | tail -40
+
+      - name: Build AWG packages
+        run: |
+          cd immortalwrt
+          make package/feeds/amneziawg/kmod-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -30
+          make package/feeds/amneziawg/amneziawg-tools/compile -j$(nproc) V=s 2>&1 | tail -20
+          make package/feeds/amneziawg/luci-proto-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -20 || true
 
       - name: Collect
         run: |
-          echo "=== amnezia 相关包 ==="
-          find immortalwrt/bin -name "*amnezia*.ipk" | sort
+          echo "=== amnezia 包 ==="
           find immortalwrt/bin -name "*amnezia*.ipk" -exec ls -lh {} \;
-          echo "=== 依赖的 crypto/udptunnel 包 ==="
-          find immortalwrt/bin -name "*crypto-lib*.ipk" -o -name "*udptunnel*.ipk" | sort
+          echo "=== crypto/udptunnel 依赖包 ==="
+          find immortalwrt/bin -name "*crypto*.ipk" -o -name "*udptunnel*.ipk" -o -name "*wireguard*.ipk" | sort
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -87,5 +103,7 @@ jobs:
           name: awg-immortalwrt-24.10.6-x86_64
           path: |
             immortalwrt/bin/**/*amnezia*.ipk
+            immortalwrt/bin/**/*crypto-lib*.ipk
+            immortalwrt/bin/**/*udptunnel*.ipk
           if-no-files-found: warn
           retention-days: 7
