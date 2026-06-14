@@ -1,4 +1,4 @@
-name: Build AWG for LEDE R24.11.11
+name: Build AWG for ImmortalWrt 24.10.6
 
 on:
   workflow_dispatch:
@@ -18,17 +18,16 @@ jobs:
             python3-setuptools rsync unzip zlib1g-dev file wget curl python3 \
             libelf-dev
 
-      - name: Clone OpenWrt
+      - name: Clone ImmortalWrt
         run: |
-          git clone https://github.com/openwrt/openwrt.git
-          cd openwrt
-          COMMIT=$(git log --oneline --before="2024-11-16" --after="2024-11-14" | head -1 | awk '{print $1}')
-          echo "Using commit: $COMMIT"
-          git checkout $COMMIT
+          git clone https://github.com/immortalwrt/immortalwrt.git
+          cd immortalwrt
+          git checkout openwrt-24.10
+          git log --oneline -3
 
       - name: Add AWG feed
         run: |
-          cd openwrt
+          cd immortalwrt
           echo "src-git amneziawg https://github.com/Slava-Shchipunov/awg-openwrt.git" \
             >> feeds.conf.default
           ./scripts/feeds update -a
@@ -36,7 +35,7 @@ jobs:
 
       - name: Configure
         run: |
-          cd openwrt
+          cd immortalwrt
           cat > .config << 'EOF'
           CONFIG_TARGET_x86=y
           CONFIG_TARGET_x86_64=y
@@ -49,37 +48,35 @@ jobs:
 
       - name: Download sources
         run: |
-          cd openwrt
+          cd immortalwrt
           make download -j4 2>&1 | tail -20
 
       - name: Build host tools
         run: |
-          cd openwrt
-          make tools/install -j$(nproc) V=s 2>&1 | tail -30
+          cd immortalwrt
+          make tools/install -j$(nproc) V=s 2>&1 | tail -10
 
       - name: Build toolchain
         run: |
-          cd openwrt
-          make toolchain/install -j$(nproc) V=s 2>&1 | tail -30
+          cd immortalwrt
+          make toolchain/install -j$(nproc) V=s 2>&1 | tail -10
 
       - name: Build packages
         run: |
-          cd openwrt
+          cd immortalwrt
           make package/feeds/amneziawg/kmod-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -30
           make package/feeds/amneziawg/amneziawg-tools/compile -j$(nproc) V=s 2>&1 | tail -20
           make package/feeds/amneziawg/luci-proto-amneziawg/compile -j$(nproc) V=s 2>&1 | tail -20 || true
 
-      - name: Collect and Upload
+      - name: Collect
         run: |
-          echo "=== bin/packages 内容 ==="
-          find /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/packages -type f | sort
-          echo "=== bin/targets 内容 ==="
-          find /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/targets -type f | sort
+          find immortalwrt/bin -name "*amnezia*.ipk" | sort
+          find immortalwrt/bin -name "*amnezia*.ipk" -exec ls -lh {} \;
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: awg-packages
-          path: /home/runner/work/awg-openwrt/awg-openwrt/openwrt/bin/packages/**/*amnezia*.ipk
+          name: awg-immortalwrt-24.10.6-x86_64
+          path: immortalwrt/bin/**/*amnezia*.ipk
           if-no-files-found: warn
           retention-days: 7
