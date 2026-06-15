@@ -22,7 +22,7 @@ jobs:
         run: |
           git clone https://github.com/immortalwrt/immortalwrt.git
           cd immortalwrt
-          git checkout v24.10.6
+          git checkout cf234f8de6d5
           git log --oneline -1
 
       - name: Add AWG feed
@@ -55,8 +55,6 @@ jobs:
           CONFIG_PACKAGE_kmod-udptunnel6=m
           EOF
           make defconfig
-          echo "=== 验证关键依赖已启用 ==="
-          grep -E "CONFIG_PACKAGE_kmod-crypto-hmac|CONFIG_PACKAGE_kmod-crypto-lib-chacha20=|CONFIG_PACKAGE_kmod-amneziawg|CONFIG_PACKAGE_kmod-udptunnel4" .config
 
       - name: Download sources
         run: |
@@ -92,10 +90,12 @@ jobs:
 
       - name: Collect
         run: |
+          echo "=== 内核版本 hash ==="
+          cat immortalwrt/build_dir/target-x86_64_musl/linux-x86_64/linux-6.6.*/.vermagic 2>/dev/null || true
           echo "=== amnezia 包 ==="
           find immortalwrt/bin -name "*amnezia*.ipk" -exec ls -lh {} \;
-          echo "=== crypto/udptunnel 依赖包 ==="
-          find immortalwrt/bin -name "*crypto*.ipk" -o -name "*udptunnel*.ipk" -o -name "*wireguard*.ipk" | sort
+          echo "=== 依赖包 ==="
+          find immortalwrt/bin -name "*crypto-lib*.ipk" -o -name "*udptunnel*.ipk" | sort
 
       - name: Upload
         uses: actions/upload-artifact@v4
