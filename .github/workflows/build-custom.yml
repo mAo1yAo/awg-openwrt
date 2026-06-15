@@ -66,18 +66,37 @@ jobs:
       - name: Build firmware
         run: |
           cd immortalwrt
-          make -j$(nproc) IGNORE_ERRORS=1 V=s 2>&1 | tail -80
+          make -j$(nproc) IGNORE_ERRORS=1 BUILD_LOG=1 V=s 2>&1 | tail -20
+          echo "=========================================="
+          echo "=== 编译失败的包 ==="
+          grep -rl "ERROR" logs/ 2>/dev/null | head -20 || true
+          grep -E "failed to build" /dev/null 2>/dev/null || true
+
+      - name: Build image
+        run: |
+          cd immortalwrt
+          make target/install -j$(nproc) V=s 2>&1 | tail -40
+          echo "=== 镜像文件 ==="
+          find bin -name "*.img.gz" 2>/dev/null
+
+      - name: Show kernel hash
+        run: |
+          cd immortalwrt
+          echo "=== 内核 vermagic ==="
+          find build_dir -name ".vermagic" -exec cat {} \;
 
       - name: Collect
         run: |
-          echo "=== 固件镜像 ==="
-          find immortalwrt/bin/targets -name "*.img.gz" -exec ls -lh {} \;
-          echo "=== 验证 AWG 已编入 ==="
-          find immortalwrt/bin -name "*amnezia*" | head
+          cd immortalwrt
+          find bin -name "*.img.gz" 2>/dev/null
+          find bin -name "*amnezia*.ipk" 2>/dev/null
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: immortalwrt-awg-firmware
-          path: immortalwrt/bin/targets/x86/64/*combined-efi.img.gz
+          path: |
+            immortalwrt/bin/targets/x86/64/*.img.gz
+            immortalwrt/bin/targets/x86/64/*.iso
+          if-no-files-found: warn
           retention-days: 7
